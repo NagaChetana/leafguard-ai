@@ -51,7 +51,7 @@ function App() {
 
     try {
       const response = await axios.post(
-        "http://127.0.0.1:8000/predict",
+        "http://34.193.36.46:8000/predict",
         formData
       );
 
