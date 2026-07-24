@@ -53,7 +53,7 @@ function App() {
     setResult(null);
     setErrorMsg(null);
 
-    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
+    const apiUrl = import.meta.env.VITE_API_URL || "http://34.193.36.46:8000";
 
     try {
       const response = await axios.post(`${apiUrl}/predict`, formData);
