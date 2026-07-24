@@ -94,7 +94,7 @@ callbacks = [
     ),
 
     tf.keras.callbacks.ModelCheckpoint(
-        "models/plant_disease_model.keras",
+        "backend/models/plant_disease_model.keras",
         save_best_only=True,
         monitor="val_accuracy"
     ),

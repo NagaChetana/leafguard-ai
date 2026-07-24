@@ -28,3 +28,8 @@ dataset/
 
 # Test Images (optional)
 test_images/
+
+.keras/
+
+.mpl/
+matplotlib-io7z8q_f/

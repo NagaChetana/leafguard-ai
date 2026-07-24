@@ -6,6 +6,7 @@ function App() {
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState(null);
   const [result, setResult] = useState(null);
+  const [errorMsg, setErrorMsg] = useState(null);
   const [loading, setLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
 
@@ -36,6 +37,7 @@ function App() {
     setImage(file);
     setPreview(URL.createObjectURL(file));
     setResult(null);
+    setErrorMsg(null);
   };
 
   const predictDisease = async () => {
@@ -48,17 +50,24 @@ function App() {
     formData.append("file", image);
 
     setLoading(true);
+    setResult(null);
+    setErrorMsg(null);
+
+    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
     try {
-      const response = await axios.post(
-        "http://34.193.36.46:8000/predict",
-        formData
-      );
+      const response = await axios.post(`${apiUrl}/predict`, formData);
 
-      setResult(response.data);
+      if (response.data.is_valid === false || response.data.error) {
+        setErrorMsg(response.data.error || "Invalid image. Please upload a valid plant leaf image.");
+        setResult(null);
+      } else {
+        setResult(response.data);
+        setErrorMsg(null);
+      }
     } catch (error) {
       console.error(error);
-      alert("Prediction Failed");
+      setErrorMsg("Prediction server connection failed. Please ensure backend is running.");
     }
 
     setLoading(false);
@@ -130,78 +139,102 @@ function App() {
 
       {/* UPLOAD */}
 
-    <section className="upload-card">
-            <section className="upload-card">
+      <section className="upload-card">
 
-         <h2>🌿 Analyze Your Plant</h2>
+        <h2>🌿 Analyze Your Plant</h2>
 
-<p className="upload-subtitle">
-  Upload a healthy or infected leaf image and let AI detect the disease instantly.
-</p>
+        <p className="upload-subtitle">
+          Upload a clear, close-up photo of one healthy or infected leaf. Avoid pots, soil, and wide plant photos.
+        </p>
 
-<div className="button-group">
+        <div className="button-group">
 
-  <label htmlFor="upload" className="upload-btn">
-    📁 Upload Leaf
-  </label>
+          <label htmlFor="upload" className="upload-btn">
+            📁 Upload Leaf
+          </label>
 
-  <button
-    className="predict-btn"
-    onClick={predictDisease}
-    disabled={loading}
-  >
-    {loading ? (
-      <>
-        <span className="spinner"></span>
-        Analyzing...
-      </>
-    ) : (
-      "🌿 Analyze Plant"
-    )}
-  </button>
+          <button
+            className="predict-btn"
+            onClick={predictDisease}
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <span className="spinner"></span>
+                Analyzing...
+              </>
+            ) : (
+              "🌿 Analyze Plant"
+            )}
+          </button>
 
-</div>
+        </div>
 
-<input
-  id="upload"
-  type="file"
-  accept="image/*"
-  onChange={handleImage}
-  hidden
-/>
+        <input
+          id="upload"
+          type="file"
+          accept="image/*"
+          onChange={handleImage}
+          hidden
+        />
 
-{image && (
-  <div className="selected-file">
-    ✅ Selected: {image.name}
-  </div>
-)}
+        {image && (
+          <div className="selected-file">
+            ✅ Selected: {image.name}
+          </div>
+        )}
 
-{preview && (
-  <div className="preview-container">
-    <img
-      src={preview}
-      alt="Preview"
-      className="preview-image"
-    />
-  </div>
-)}
- </section>
-</section>
+        {preview && (
+          <div className="preview-container">
+            <img
+              src={preview}
+              alt="Preview"
+              className="preview-image"
+            />
+          </div>
+        )}
+
+      </section>
+
+      {/* ERROR DISPLAY */}
+
+      {errorMsg && (
+        <section className="error-card">
+          <div className="error-icon">⚠️</div>
+          <div className="error-content">
+            <h4>Validation Error</h4>
+            <p>{errorMsg}</p>
+          </div>
+        </section>
+      )}
+
       {/* RESULTS */}
 
-      {result && (
+      {result && result.is_valid !== false && (
 
-        <section className="result-card">
+        <section className={`result-card ${result.is_healthy ? "healthy-card" : "diseased-card"}`}>
 
-          <h2>Prediction Result</h2>
+          <h2>{result.needs_review ? "🔎 Plant Analysis Needs Review" : result.is_healthy ? "🌿 Plant Analysis Result" : "⚠️ Disease Detection Result"}</h2>
 
           <div className="result-grid">
 
             <div className="result-box">
 
-              <h4>Disease</h4>
+              <h4>Plant Status</h4>
 
-              <p>{result.disease}</p>
+              <p className={result.is_healthy ? "status-healthy" : "status-diseased"}>
+                {result.needs_review ? "Needs Review 🔎" : result.is_healthy ? "Healthy Plant 🌿" : "Diseased ⚠️"}
+              </p>
+
+            </div>
+
+            <div className="result-box">
+
+              <h4>{result.needs_review ? "Result" : result.is_healthy ? "Plant Type" : "Detected Disease"}</h4>
+
+              <p className="result-disease-text">
+                {result.is_healthy ? (result.plant || "Plant") : result.disease}
+              </p>
 
             </div>
 
@@ -214,6 +247,18 @@ function App() {
             </div>
 
           </div>
+
+          {result.is_healthy && (
+            <p className="healthy-note">
+              ✅ No disease detected! Your plant appears healthy and vibrant.
+            </p>
+          )}
+
+          {result.needs_review && (
+            <p className="healthy-note">
+              ℹ️ The image looks like a leaf, but the model cannot distinguish a disease confidently. Try a closer, well-lit photo of one leaf.
+            </p>
+          )}
 
         </section>
 

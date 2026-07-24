@@ -48,12 +48,7 @@ image = image.resize(IMAGE_SIZE)
 # Convert to NumPy
 image = np.array(image, dtype=np.float32)
 
-# ==========================================
-# MobileNetV2 Preprocessing
-# ==========================================
-
-image = tf.keras.applications.mobilenet_v2.preprocess_input(image)
-
+# Note: plant_disease_model.keras already contains preprocess_input inside its graph
 # Add Batch Dimension
 image = np.expand_dims(image, axis=0)
 
